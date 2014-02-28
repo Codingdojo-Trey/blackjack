@@ -1,0 +1,4 @@
+function awesome()
+{
+  alert('awesome');
+}

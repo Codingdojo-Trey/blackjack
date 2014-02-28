@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" type="text/css" href="style.css">
+<title>NIMB</title>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" src='/socket.io/socket.io.js'></script>
+<style type="text/css"> 
+</style>
+<script type="text/javascript">
+    function update_dealer_hand(hit1, hit2)
+    {
+        if(hit1 == 'k' || hit1 == 'q' || hit1 == 'j')
+        {
+            hit1 = 10;
+        }
+        if(hit2 == 'k' || hit2 == 'q' || hit2 == 'j')
+        {
+            hit2 = 10;
+        }
+        if(hit1 == 'a')
+        {
+            hit1 = 1;
+        }
+        if(hit2 == 'a')
+        {
+            hit2 = 1;
+        }
+
+        var old_total = parseInt($('#dealer_total').text());
+        var new_total = old_total + hit1 + hit2;
+        $('#dealer_total').text(new_total);
+    }
+    function update_player_hand(hit1, hit2)
+    {
+        if(hit1 == 'k' || hit1 == 'q' || hit1 == 'j')
+        {
+            hit1 = 10;
+        }
+        if(hit2 == 'k' || hit2 == 'q' || hit2 == 'j')
+        {
+            hit2 = 10;
+        }
+        if(hit1 == 'a')
+        {
+            hit1 = parseInt(prompt('1 or 11?', 1));
+            if(hit1 != 1 && hit1 != 11)
+            {
+                hit1 = 1;
+                alert('you are a complete idiot and you will never make a lasting contribution to anything...');
+            }
+        }
+        if(hit2 == 'a')
+        {
+            hit2 = parseInt(prompt('1 or 11?', 1));
+            if(hit2 != 1 && hit2 != 11)
+            {
+                hit2 = 1;
+                alert('you are a complete idiot and you will never make a lasting contribution to anything...');
+            }
+        }
+
+        var old_total = parseInt($('#player_total').text());
+        var new_total = old_total + hit1 + hit2;
+        $('#player_total').text(new_total);
+    }
+
+    function make_card(obj)
+    {
+        switch (obj.suit)
+        {
+            case 'h':
+                var img = '&hearts;';
+            break
+            case 'd':
+                var img = '&diams;';
+            break    
+            case 'c':
+                var img = '&clubs;';
+            break
+            default:
+                var img = '&spades;';
+        }
+
+        var string = "<div class = 'card "+obj.suit+"'>"+obj.val+"<span>"+img+"</span></div>";
+        return string;
+    }
+    function clear_totals()
+    {
+
+        $('#player_total, #dealer_total').text(0);
+        $('#dealer, #cards').html('');
+    }
+
+    function player_logic()
+    {
+        var total = parseInt($('#player_total').text());
+        if(total > 21)
+        {
+            alert('Bust!  You lose!');  
+            clear_totals();
+            $('.deal, .hit').fadeIn();
+        }    
+    }
+
+    function dealer_logic()
+    {
+        var total = parseInt($('#dealer_total').text());
+        var player_total = parseInt($('#player_total').text());
+        if(total < 17)  //does the dealer need to hit?
+        {
+            io.emit('dealer_hit');
+        }
+        else if(total < 21 && total > player_total) //dealer is over 17, does he win?
+        {
+         alert('dealer wins!');
+         clear_totals();
+         $('.deal, .hit').fadeIn();
+        } 
+        else if(total > 21)
+        {
+            alert('You win! The dealer busts!');
+            clear_totals();
+            $('.deal, .hit').fadeIn();
+        }  
+        else 
+        {
+            alert('You win! Well played!');
+            clear_totals();
+            $('.deal, .hit').fadeIn();
+        }  
+    }
+    var io = io.connect('http://localhost:8080'); //replace 'hostname' with localhost and the port number you had set, like 'http:localhost:7707'
+    //trigger send message event 
+    $(document).ready(function (){
+        io.emit('need_total');
+
+        //listen to display message event
+        io.on('hit_card', function (data){
+            $('#cards').append(make_card(data));
+            update_player_hand(data.val, 0);
+            player_logic();
+        });
+
+        io.on('give_two_cards', function (data){
+            $('#cards').append(make_card(data[1]), make_card(data[0]));
+            $('#dealer').append(make_card(data[3]), make_card(data[2]));
+            update_player_hand(data[0].val, data[1].val);
+            update_dealer_hand(data[2].val, data[3].val);
+            player_logic();
+        });
+
+
+        io.on('give_new_deck', function(data)
+        {
+            alert(data);
+            $('#cards, #dealer').html("");
+            clear_totals();
+        });
+
+        io.on('card_to_dealer', function(data){
+            $('#dealer').append(make_card(data));
+            update_dealer_hand(data.val, 0);
+            dealer_logic();
+        });
+
+        io.on('cards_left', function(data){
+            $('#cards_left').text(data);
+        })
+
+
+
+        $('.deal').click(function(){
+            io.emit('deal_me_in');
+            console.log('deal me in requested');
+        });
+
+        $('.hit').click(function(){
+            io.emit('hit_me');
+        });
+
+        $('.stay').click(function(){
+            io.emit('stay');
+            $('.deal, .hit').fadeOut();
+            dealer_logic();
+        });
+        $('.new').click(function(){
+            io.emit('new_deck');
+        });
+    });
+</script>
+</head>
+<body>
+<h2 id='in_deck'>Cards in deck: <span id='cards_left'></span></h2>
+<h2>The dealer's cards:</h2>
+<div id='dealer'></div>
+<h2>Dealer's total: <span id='dealer_total'>0</span></h2>
+<h2>Your cards:</h2>
+<div id='cards'></div>
+<h2>Your total: <span id='player_total'>0</span></h2>
+<div id='buttons'>
+    <button class='hit'>Hit me</button>
+    <button class='stay'>Stay</button>
+    <button class='deal'>Deal me in!</button>
+    <button class='new'>New Deck</button>
+    <!-- <button class='new_hand'>New hand!</button> -->
+</div>
+</body>
+</html>

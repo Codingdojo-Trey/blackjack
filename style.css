@@ -1,0 +1,24 @@
+*
+{
+    font-family: sans-serif;
+}
+
+.h, .d
+{
+    color: red;
+}
+
+.card
+{
+    width: 70px;
+    height: 85px;
+    display: inline-block;
+    border: 1px solid black;
+    margin: 5px;
+}
+.card span
+{
+    position: relative;
+    top: 40px;
+    left: 20px;
+}
