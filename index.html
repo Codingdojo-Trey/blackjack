@@ -131,7 +131,7 @@
             $('.deal, .hit').fadeIn();
         }  
     }
-    var io = io.connect('http://localhost:8080'); //replace 'hostname' with localhost and the port number you had set, like 'http:localhost:7707'
+    var io = io.connect('http://localhost:8080'); //connect to your node server
     //trigger send message event 
     $(document).ready(function (){
         io.emit('need_total');
@@ -206,5 +206,7 @@
     <button class='new'>New Deck</button>
     <!-- <button class='new_hand'>New hand!</button> -->
 </div>
+<img src="feet.jpg" width='200' height='200'>
+<img src="notice_icon.jpg" width='200' height='200'>
 </body>
 </html>

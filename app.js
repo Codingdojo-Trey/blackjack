@@ -1,32 +1,37 @@
 var http = require('http');
 var fs = require('fs');
 var io = require('socket.io');
+var static_contents = require('./static-content.js');
 var current_card_index = 51
 //////////////////make the playing cards///////////////////
-var dealer_maker = require('dealer.js');  
+var dealer_maker = require('./dealer.js');  
 var dealer = dealer_maker();
 var cards = dealer.shuffle(dealer.make_cards());
 ////////////////////do node stuff///////////////////////////
 server = http.createServer(function (request, response){
-    if(request.url === '/index.html') 
-    {
-        response.writeHead(200, {'Content-type': 'text/html'});
-        fs.readFile('index.html', 'utf8', function (errors, contents){
-            response.write(contents); 
-            response.end();
-        });
-    }
-    else if(request.url === '/style.css')
-    {
-      fs.readFile('style.css', 'utf8', function (errors, contents){
-      response.write(contents);
-      response.end();
-      });
-    }
-    else
-    {
-      response.end('File not found!!!');
-    }
+  //we want everything to be handled by executing the following function:
+  static_contents(request, response)
+  //old content-rendering code
+    // if(request.url === '/index.html') 
+    // {
+    //     response.writeHead(200, {'Content-type': 'text/html'});
+    //     fs.readFile('index.html', 'utf8', function (errors, contents){
+    //         response.write(contents); 
+    //         response.end();
+    //     });
+    // }
+    // else if(request.url === '/style.css')
+    // {
+    //   fs.readFile('style.css', 'utf8', function (errors, contents){
+    //   response.write(contents);
+    //   response.end();
+    //   });
+    // }
+    // else
+    // {
+    //   static_contents(request, response);
+    //   //response.end('File not found!!!');
+    // }
   });
 //have socket io listen to server
 var sockets = io.listen(server);
